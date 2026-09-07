@@ -1,0 +1,6 @@
+{
+  "name": "PTS",
+  "description": "PTS - প্রিমিয়াম প্রাইভেট চ্যাট, Metered HD ভিডিও ও ভয়েস কল এবং ডিজিটাল সার্ভিস প্ল্যাটফর্ম।",
+  "requestFramePermissions": ["camera", "microphone", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

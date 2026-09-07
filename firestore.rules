@@ -1,0 +1,142 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.admin == true ||
+        request.auth.token.role == 'owner' ||
+        request.auth.uid == 'admin_owner_plabon' ||
+        request.auth.uid == 'USR-OWNER'
+      );
+    }
+
+    // 1. Users collection
+    // - Anyone signed in can read profiles (needed for chat/browse UI).
+    // - A user may create/update their OWN doc, but may NEVER change their
+    //   own role, isBanned, diamonds, or firebaseAccessGranted fields —
+    //   only admin can change those. This closes the self-escalation hole
+    //   (e.g. a user setting role:'owner' on themselves).
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId &&
+        request.resource.data.role in ['user', 'vip'];
+      allow update: if isAdmin() || (
+        isSignedIn() && request.auth.uid == userId &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.diamonds == resource.data.diamonds &&
+        request.resource.data.isBanned == resource.data.isBanned &&
+        request.resource.data.firebaseAccessGranted == resource.data.firebaseAccessGranted
+      );
+      allow delete: if isAdmin();
+    }
+
+    // 2. Developers / Sellers collection: public browse, write only by
+    // admin or that specific seller.
+    match /developers/{devId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == ('dev_' + devId));
+    }
+
+    // 3. Realtime Chat Messages — privacy isolation.
+    match /chat_messages/{messageId} {
+      allow read: if isAdmin() || (isSignedIn() && (
+        resource.data.isPublic == true ||
+        resource.data.senderUserId == request.auth.uid ||
+        resource.data.receiverUserId == request.auth.uid ||
+        (resource.data.participants is list && request.auth.uid in resource.data.participants) ||
+        resource.data.sender == 'bot'
+      ));
+      allow create: if isSignedIn() && request.resource.data.senderUserId == request.auth.uid;
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.senderUserId == request.auth.uid);
+    }
+
+    // 4. Payment Requests (Recharge)
+    match /payment_requests/{reqId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // 5. Service / Hire Orders
+    match /service_orders/{orderId} {
+      allow read: if isAdmin() || (isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        request.auth.uid == ('dev_' + string(resource.data.developerId))
+      ));
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin() || (isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        request.auth.uid == ('dev_' + string(resource.data.developerId))
+      ));
+      allow delete: if isAdmin();
+    }
+
+    // 6. Seller Withdraw Requests
+    match /seller_withdraw_requests/{withdrawId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == ('dev_' + string(resource.data.developerId)));
+      allow create: if isSignedIn() && request.auth.uid == ('dev_' + string(request.resource.data.developerId));
+      allow update, delete: if isAdmin();
+    }
+
+    // 7. System Configurations & Payment Settings: public read for site
+    // info, write by admin (or the one-time seeding flag on first boot).
+    match /system_config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin() || (isSignedIn() && configId.matches('seed_status_.*'));
+    }
+
+    // 8. Recharge Packages: public read, admin write.
+    match /recharge_packages/{pkgId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 9. Real-time WebRTC Call Signals
+    match /call_signals/{signalId} {
+      allow read: if isAdmin() || (isSignedIn() && (
+        resource.data.recipientId == 'all' ||
+        resource.data.recipientId == 'broadcast' ||
+        resource.data.recipientId == request.auth.uid ||
+        resource.data.senderId == request.auth.uid
+      ));
+      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+      allow update, delete: if isAdmin() || (isSignedIn() && (
+        resource.data.recipientId == request.auth.uid ||
+        resource.data.senderId == request.auth.uid
+      ));
+    }
+
+    // 10. Database Backups: admin only.
+    match /database_backups/{backupId} {
+      allow read, write: if isAdmin();
+    }
+
+    // 11. Firebase Access Requests — a user can only file/read their own.
+    match /firebase_access_requests/{reqId} {
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // 12. User Locations — only the user themself (for live map / calls) or admin.
+    match /user_locations/{locationId} {
+      allow read: if isAdmin() || (isSignedIn() && (
+        locationId == request.auth.uid || resource.data.userId == request.auth.uid
+      ));
+      allow write: if isAdmin() || (isSignedIn() && (
+        locationId == request.auth.uid || request.resource.data.userId == request.auth.uid
+      ));
+    }
+
+    // Fallback: deny anything not explicitly matched above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

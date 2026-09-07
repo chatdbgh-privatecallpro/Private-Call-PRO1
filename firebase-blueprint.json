@@ -1,0 +1,220 @@
+{
+  "entities": {
+    "UserAccount": {
+      "title": "UserAccount",
+      "description": "User account schema including roles, diamonds balance, and profile details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique user ID" },
+        "name": { "type": "string", "description": "User display name", "maxLength": 100 },
+        "username": { "type": "string", "description": "Unique username handle", "maxLength": 60 },
+        "bio": { "type": "string", "description": "User biography", "maxLength": 500 },
+        "phone": { "type": "string", "description": "Phone number or login ID", "maxLength": 30 },
+        "password": { "type": "string", "description": "User password hash or credential", "maxLength": 128 },
+        "diamonds": { "type": "number", "description": "Current diamond balance" },
+        "isBanned": { "type": "boolean", "description": "Whether user is banned from system" },
+        "banReason": { "type": "string", "description": "Reason for ban", "maxLength": 200 },
+        "joinedDate": { "type": "string", "description": "Account registration date string", "maxLength": 50 },
+        "role": { "type": "string", "enum": ["user", "seller", "vip", "admin", "owner"], "description": "User authorization role" },
+        "avatar": { "type": "string", "description": "Profile picture URL or avatar ID", "maxLength": 1000000 },
+        "developerId": { "type": "number", "description": "Linked developer/seller ID if applicable" },
+        "firebaseAccessGranted": { "type": "boolean", "description": "Whether cloud database access was granted" },
+        "firebaseRequestStatus": { "type": "string", "enum": ["none", "pending", "approved", "rejected"], "description": "Cloud access request status" }
+      },
+      "required": ["id", "name", "diamonds"]
+    },
+    "Developer": {
+      "title": "Developer",
+      "description": "Seller / Host profile offering live chat and calling services",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number", "description": "Developer numerical ID" },
+        "name": { "type": "string", "description": "Host name", "maxLength": 100 },
+        "username": { "type": "string", "description": "Username handle", "maxLength": 60 },
+        "phone": { "type": "string", "description": "Contact number", "maxLength": 30 },
+        "password": { "type": "string", "description": "Account password", "maxLength": 128 },
+        "service": { "type": "string", "description": "Primary service title", "maxLength": 150 },
+        "category": { "type": "string", "enum": ["web", "mobile", "design", "video", "app", "marketing", "content"], "description": "Service category" },
+        "price": { "type": "number", "description": "Hourly price / diamond rate" },
+        "diamondPerHour": { "type": "number", "description": "Diamonds per hour" },
+        "deliveryTime": { "type": "string", "description": "Service delivery timeframe", "maxLength": 80 },
+        "skills": { "type": "string", "description": "Host skills list", "maxLength": 250 },
+        "bio": { "type": "string", "description": "Bio description", "maxLength": 600 },
+        "avatar": { "type": "string", "description": "Host image avatar URL", "maxLength": 1000000 },
+        "online": { "type": "boolean", "description": "Current online availability" },
+        "rating": { "type": "number", "description": "Customer rating average" },
+        "completedOrders": { "type": "number", "description": "Completed session count" },
+        "telegram": { "type": "string", "description": "Telegram handle", "maxLength": 80 },
+        "earnings": { "type": "number", "description": "Total earned diamonds" },
+        "withdrawnEarnings": { "type": "number", "description": "Withdrawn diamonds total" }
+      },
+      "required": ["id", "name", "service", "price"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Real-time chat message sent in public or private seller threads",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique message ID", "maxLength": 128 },
+        "sender": { "type": "string", "enum": ["user", "bot", "developer", "admin"], "description": "Message sender type" },
+        "text": { "type": "string", "description": "Message content text", "maxLength": 5000 },
+        "timestamp": { "type": "string", "description": "Formatted display timestamp", "maxLength": 50 },
+        "createdAt": { "type": "number", "description": "Unix timestamp in ms" },
+        "developerId": { "type": "number", "description": "Associated seller/host ID" },
+        "isOrderCard": { "type": "boolean", "description": "Whether message contains service order card" },
+        "senderUserId": { "type": "string", "description": "Sender User Unique ID", "maxLength": 128 },
+        "receiverUserId": { "type": "string", "description": "Receiver User Unique ID", "maxLength": 128 },
+        "participants": { "type": "array", "description": "List of authorized participants in thread" },
+        "isPublic": { "type": "boolean", "description": "Whether message is a public announcement" },
+        "attachment": { "type": "string", "description": "Optional media attachment metadata or URL" }
+      },
+      "required": ["id", "sender", "timestamp"]
+    },
+    "PaymentRequest": {
+      "title": "PaymentRequest",
+      "description": "Diamond recharge payment submission from users",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique payment request ID", "maxLength": 128 },
+        "userId": { "type": "string", "description": "Requesting user ID", "maxLength": 128 },
+        "userName": { "type": "string", "description": "Requesting user display name", "maxLength": 100 },
+        "userPhone": { "type": "string", "description": "User profile phone number", "maxLength": 30 },
+        "method": { "type": "string", "enum": ["bkash", "nagad", "rocket", "upay"], "description": "Payment gateway method" },
+        "senderPhone": { "type": "string", "description": "Sender mobile banking number", "maxLength": 30 },
+        "trxId": { "type": "string", "description": "Transaction ID from SMS", "maxLength": 80 },
+        "bdtAmount": { "type": "number", "description": "BDT amount sent" },
+        "amountDiamonds": { "type": "number", "description": "Expected diamonds" },
+        "timestamp": { "type": "string", "description": "Submission date string", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"], "description": "Payment approval status" },
+        "note": { "type": "string", "description": "Optional notes or rejection reasons", "maxLength": 300 }
+      },
+      "required": ["id", "userId", "method", "senderPhone", "trxId", "bdtAmount", "amountDiamonds", "status"]
+    },
+    "ServiceOrder": {
+      "title": "ServiceOrder",
+      "description": "Service hire order placed by a customer to a host/seller",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique order ID", "maxLength": 128 },
+        "userId": { "type": "string", "description": "Buyer user ID", "maxLength": 128 },
+        "userName": { "type": "string", "description": "Buyer name", "maxLength": 100 },
+        "developerId": { "type": "number", "description": "Hired developer/host ID" },
+        "developerName": { "type": "string", "description": "Hired developer name", "maxLength": 100 },
+        "serviceName": { "type": "string", "description": "Service booked", "maxLength": 200 },
+        "priceDiamonds": { "type": "number", "description": "Total diamonds paid" },
+        "durationMinutes": { "type": "number", "description": "Session length in minutes" },
+        "date": { "type": "string", "description": "Booking date", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["pending", "in_progress", "completed", "cancelled"], "description": "Order progress status" },
+        "requirements": { "type": "string", "description": "Special request or custom message", "maxLength": 2000 }
+      },
+      "required": ["id", "userId", "developerId", "serviceName", "priceDiamonds", "status"]
+    },
+    "SellerWithdrawRequest": {
+      "title": "SellerWithdrawRequest",
+      "description": "Withdrawal request submitted by seller to cash out diamonds",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique withdrawal ID", "maxLength": 128 },
+        "developerId": { "type": "number", "description": "Requesting developer ID" },
+        "developerName": { "type": "string", "description": "Developer name", "maxLength": 100 },
+        "amountDiamonds": { "type": "number", "description": "Diamonds to withdraw" },
+        "bdtAmount": { "type": "number", "description": "BDT amount to receive" },
+        "paymentMethod": { "type": "string", "enum": ["bkash", "nagad", "rocket", "upay"], "description": "Target payout wallet" },
+        "accountNumber": { "type": "string", "description": "Payout account number", "maxLength": 30 },
+        "accountType": { "type": "string", "enum": ["personal", "agent"], "description": "Account type" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"], "description": "Withdrawal status" },
+        "requestedAt": { "type": "string", "description": "Request timestamp", "maxLength": 50 },
+        "adminTrxId": { "type": "string", "description": "Payout transaction ID", "maxLength": 80 },
+        "adminNote": { "type": "string", "description": "Admin comments", "maxLength": 300 }
+      },
+      "required": ["id", "developerId", "amountDiamonds", "bdtAmount", "paymentMethod", "accountNumber", "status"]
+    },
+    "SiteConfig": {
+      "title": "SiteConfig",
+      "description": "Global application branding, notices, promotional banners and Metered Video settings",
+      "type": "object",
+      "properties": {
+        "siteName": { "type": "string", "description": "Site branding name", "maxLength": 60 },
+        "siteTagline": { "type": "string", "description": "Site tagline", "maxLength": 150 },
+        "bannerNotice": { "type": "string", "description": "Top notice message", "maxLength": 500 },
+        "showBannerNotice": { "type": "boolean", "description": "Whether banner is visible" },
+        "marqueeAlert": { "type": "string", "description": "Ticker alert text", "maxLength": 500 },
+        "showMarquee": { "type": "boolean", "description": "Whether marquee ticker is shown" },
+        "maintenanceMode": { "type": "boolean", "description": "System maintenance lock" },
+        "adminPin": { "type": "string", "description": "Security admin pin", "maxLength": 20 },
+        "telegramChannel": { "type": "string", "description": "Official Telegram channel", "maxLength": 200 },
+        "minRechargeAmount": { "type": "number", "description": "Minimum recharge BDT" },
+        "supportStatus": { "type": "string", "enum": ["active", "busy", "offline"], "description": "Support team status" },
+        "meteredAppName": { "type": "string", "description": "Metered Video live application name", "maxLength": 100 },
+        "meteredApiKey": { "type": "string", "description": "Metered API Key", "maxLength": 150 },
+        "freeDiamondsOfferEnabled": { "type": "boolean", "description": "Whether signup & recharge bonuses are active" },
+        "welcomeBonusDiamonds": { "type": "number", "description": "Diamonds credited on signup" },
+        "rechargeBonusPercentage": { "type": "number", "description": "Bonus percentage on recharges" }
+      },
+      "required": ["siteName"]
+    },
+    "PaymentSettings": {
+      "title": "PaymentSettings",
+      "description": "Mobile banking receiving numbers and exchange rates",
+      "type": "object",
+      "properties": {
+        "bkashNumber": { "type": "string", "maxLength": 30 },
+        "nagadNumber": { "type": "string", "maxLength": 30 },
+        "rocketNumber": { "type": "string", "maxLength": 30 },
+        "upayNumber": { "type": "string", "maxLength": 30 },
+        "ratePerDiamondBdt": { "type": "number" },
+        "telegramSupportUrl": { "type": "string", "maxLength": 200 }
+      },
+      "required": ["bkashNumber", "nagadNumber", "ratePerDiamondBdt"]
+    },
+    "CallSignal": {
+      "title": "CallSignal",
+      "description": "WebRTC cloud signaling payload for live audio and video calling",
+      "type": "object",
+      "properties": {
+        "callSessionId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "enum": ["OFFER", "ANSWER", "CANDIDATE", "ACCEPT", "REJECT", "END"] },
+        "fromUserId": { "type": "string", "maxLength": 128 },
+        "fromUserName": { "type": "string", "maxLength": 100 },
+        "toDeveloperId": { "type": "number" },
+        "toUserId": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["callSessionId", "type", "fromUserId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserAccount",
+      "description": "User profiles and wallet diamond accounts"
+    },
+    "/developers/{devId}": {
+      "schema": "Developer",
+      "description": "Verified seller and host listings"
+    },
+    "/chat_messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Real-time chat messages"
+    },
+    "/payment_requests/{requestId}": {
+      "schema": "PaymentRequest",
+      "description": "Recharge submissions"
+    },
+    "/service_orders/{orderId}": {
+      "schema": "ServiceOrder",
+      "description": "Service orders and session bookings"
+    },
+    "/seller_withdraw_requests/{requestId}": {
+      "schema": "SellerWithdrawRequest",
+      "description": "Seller diamond payout requests"
+    },
+    "/system_config/{configId}": {
+      "schema": "SiteConfig",
+      "description": "Global application and payment configuration documents"
+    },
+    "/call_signals/{callSessionId}": {
+      "schema": "CallSignal",
+      "description": "Realtime WebRTC call session signaling documents"
+    }
+  }
+}
